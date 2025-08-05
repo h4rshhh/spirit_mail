@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Generated Email Sender</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-3xl p-8 rounded-lg shadow-lg">
+      <h1 class="text-2xl font-bold text-center mb-6">
+        AI Generated Email Sender
+      </h1>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block font-medium mb-1"
+            >Recipients (comma separated)</label
+          >
+          <input
+            id="recipients"
+            type="text"
+            class="w-full border border-gray-300 rounded p-2"
+            placeholder="john@example.com, jane@example.com"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium mb-1">Prompt for Email</label>
+          <textarea
+            id="prompt"
+            class="w-full border border-gray-300 rounded p-2"
+            rows="3"
+            placeholder="e.g. Invite to product launch"
+          ></textarea>
+        </div>
+
+        <button
+          id="generateBtn"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded px-4 py-2"
+        >
+          Generate Email
+        </button>
+
+        <div id="emailSection" class="hidden">
+          <label class="block font-medium mb-1 mt-4">Generated Email (editable)</label>
+          <textarea
+            id="emailContent"
+            class="w-full border border-gray-300 rounded p-2"
+            rows="10"
+          ></textarea>
+
+          <div class="mt-2">
+            <label class="block font-medium mb-1">Subject (optional)</label>
+            <input
+              id="subject"
+              type="text"
+              class="w-full border border-gray-300 rounded p-2"
+              placeholder="Subject line"
+            />
+          </div>
+
+          <button
+            id="sendBtn"
+            class="w-full mt-4 bg-green-600 hover:bg-green-700 text-white rounded px-4 py-2"
+          >
+            Send Email
+          </button>
+        </div>
+      </div>
+
+      <p id="status" class="text-center mt-4"></p>
+    </div>
+
+    <script>
+      const generateBtn = document.getElementById("generateBtn");
+      const sendBtn = document.getElementById("sendBtn");
+      const emailSection = document.getElementById("emailSection");
+      const promptEl = document.getElementById("prompt");
+      const emailContentEl = document.getElementById("emailContent");
+      const recipientsEl = document.getElementById("recipients");
+      const subjectEl = document.getElementById("subject");
+      const statusEl = document.getElementById("status");
+
+      generateBtn.addEventListener("click", async () => {
+        statusEl.textContent = "";
+        const prompt = promptEl.value.trim();
+        if (!prompt) {
+          alert("Please enter a prompt");
+          return;
+        }
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = "Generating...";
+        try {
+          const res = await fetch("/api/generate-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            emailContentEl.value = data.email;
+            emailSection.classList.remove("hidden");
+          } else {
+            statusEl.textContent = data.error || "Error generating email";
+          }
+        } catch (error) {
+          console.error(error);
+          statusEl.textContent = "Network error";
+        } finally {
+          generateBtn.disabled = false;
+          generateBtn.textContent = "Generate Email";
+        }
+      });
+
+      sendBtn.addEventListener("click", async () => {
+        statusEl.textContent = "";
+        const recipients = recipientsEl.value.trim();
+        const content = emailContentEl.value.trim();
+        const subject = subjectEl.value.trim();
+
+        if (!recipients) {
+          alert("Please enter at least one recipient");
+          return;
+        }
+        if (!content) {
+          alert("No email content to send");
+          return;
+        }
+
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Sending...";
+        try {
+          const res = await fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ recipients, content, subject }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            statusEl.textContent = "Email sent successfully!";
+            emailSection.classList.add("hidden");
+            promptEl.value = "";
+            subjectEl.value = "";
+            emailContentEl.value = "";
+          } else {
+            statusEl.textContent = data.error || "Error sending email";
+          }
+        } catch (error) {
+          console.error(error);
+          statusEl.textContent = "Network error";
+        } finally {
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Send Email";
+        }
+      });
+    </script>
+  </body>
+</html>

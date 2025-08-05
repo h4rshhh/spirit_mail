@@ -1,0 +1,17 @@
+{
+  "name": "ai-email-sender",
+  "version": "1.0.0",
+  "description": "AI powered email generator and sender backend",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.4",
+    "openai": "^4.36.0"
+  }
+}
